@@ -4,6 +4,7 @@ import {
   Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import { useNavigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import PaidIcon from '@mui/icons-material/Paid';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -85,23 +86,18 @@ function Vendas() {
     { vendedor: 'Ana', vendas: 25000 },
   ];
 
+  const navigate = useNavigate();
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff' }}>
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
         <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => navigate('/') }>
             <HomeIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Dashboard de Vendas
           </Typography>
-          <Box>
-            <IconButton color="inherit"><StoreIcon /></IconButton>
-            <IconButton color="inherit"><PaidIcon /></IconButton>
-            <IconButton color="inherit"><InventoryIcon /></IconButton>
-            <IconButton color="inherit"><PeopleIcon /></IconButton>
-            <IconButton color="inherit"><BusinessCenterIcon /></IconButton>
-          </Box>
+          {/* Ícones removidos conforme solicitado */}
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
