@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody
 } from '@mui/material';
@@ -13,45 +12,39 @@ import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, CartesianGrid } from 'recharts';
 
 function Vendas() {
-  // KPIs
-  const kpis = [
-    {
-      label: 'Total Vendido no Mês',
-      value: 'R$ 150.000',
-      gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)',
-    },
-    {
-      label: 'Total Vendido na Semana',
-      value: 'R$ 38.000',
-      gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)',
-    },
-    {
-      label: 'Total Vendido no Dia',
-      value: 'R$ 7.500',
-      gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)',
-    },
-    {
-      label: 'Ticket Médio',
-      value: 'R$ 250',
-      gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)',
-    },
-    {
-      label: 'Pedidos Emitidos',
-      value: '600',
-      gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)',
-    },
-  ];
+  // KPIs dinâmicos
+  const [kpis, setKpis] = useState([
+    { label: 'Total Vendido no Mês', value: '...', gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' },
+    { label: 'Total Vendido na Semana', value: '...', gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)' },
+    { label: 'Total Vendido no Dia', value: '...', gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)' },
+    { label: 'Ticket Médio', value: '...', gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)' },
+    { label: 'Pedidos Emitidos', value: '...', gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)' },
+  ]);
 
-  // Evolução do faturamento (linha)
-  const faturamentoData = [
-    { data: '01/12', valor: 7000 },
-    { data: '02/12', valor: 9000 },
-    { data: '03/12', valor: 8000 },
-    { data: '04/12', valor: 12000 },
-    { data: '05/12', valor: 11000 },
-    { data: '06/12', valor: 9500 },
-    { data: '07/12', valor: 7500 },
-  ];
+  // Evolução do faturamento (linha) - dinâmico
+  const [faturamentoData, setFaturamentoData] = useState([]);
+
+  useEffect(() => {
+    // Busca evolução do faturamento dos últimos 6 meses
+    const fetchFaturamento = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/kpis/sales-evolution');
+        const data = await response.json();
+        if (response.ok && data.evolucao) {
+          // Ajusta para formato do gráfico
+          setFaturamentoData(
+            data.evolucao.map(item => ({
+              data: item.mes,
+              valor: item.total_vendido
+            }))
+          );
+        }
+      } catch (err) {
+        // Em caso de erro, mantém vazio
+      }
+    };
+    fetchFaturamento();
+  }, []);
 
   // Produtos mais vendidos (barras)
   const produtosVendidos = [
@@ -87,6 +80,36 @@ function Vendas() {
   ];
 
   const navigate = useNavigate();
+  useEffect(() => {
+    // Busca as KPIs do backend Flask
+    const fetchKpis = async () => {
+      try {
+        const today = new Date();
+        const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const response = await fetch('http://localhost:5000/api/kpis/sales', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startDate, endDate })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setKpis([
+            { label: 'Total Vendido no Mês', value: `R$ ${Number(data.total_vendido_mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' },
+            { label: 'Total Vendido na Semana', value: `R$ ${Number(data.total_vendido_semana).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)' },
+            { label: 'Total Vendido no Dia', value: `R$ ${Number(data.total_vendido_dia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)' },
+            { label: 'Ticket Médio', value: `R$ ${Number(data.ticket_medio).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)' },
+            { label: 'Pedidos Emitidos', value: `${data.pedidos_emitidos}`, gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)' },
+          ]);
+        }
+      } catch (err) {
+        // Em caso de erro, mantém os valores como '...'
+      }
+    };
+    fetchKpis();
+  }, []);
+  // Debug: mostrar os valores dos 6 meses no console
+  console.log('Evolução do faturamento (6 meses):', faturamentoData);
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff' }}>
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
