@@ -35,7 +35,7 @@ function Vendas() {
     const fetchFaturamento = async () => {
       setLoadingFaturamento(true);
       try {
-        const response = await fetch('http://localhost:5000/api/kpis/sales-evolution');
+        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-evolution');
         const data = await response.json();
         if (response.ok && data.evolucao) {
           // Ajusta para formato do gráfico
@@ -66,7 +66,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://localhost:5000/api/kpis/top-products', {
+        const response = await fetch('http://192.168.20.10:5000/api/kpis/top-products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -105,7 +105,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://localhost:5000/api/kpis/sales-by-channel', {
+        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-by-channel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -136,7 +136,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://localhost:5000/api/kpis/sales-by-representative', {
+        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-by-representative', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -164,7 +164,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://localhost:5000/api/kpis/sales', {
+        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
