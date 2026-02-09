@@ -1,87 +1,116 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Tooltip as MuiTooltip, CircularProgress
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate } from 'react-router-dom';
-import StoreIcon from '@mui/icons-material/Store';
-import PaidIcon from '@mui/icons-material/Paid';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PeopleIcon from '@mui/icons-material/People';
-import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, CartesianGrid } from 'recharts';
+
+function formatCurrency(value) {
+  if (typeof value !== 'number' || isNaN(value)) return '—';
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+}
+
+function formatDate(value) {
+  if (!value) return '—';
+  const [year, month, day] = String(value).split('T')[0].split('-');
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}
 
 function Financeiro() {
-  // KPIs
+  const navigate = useNavigate();
+
+  const [kpisData, setKpisData] = useState({});
+  const [barData, setBarData] = useState([]);
+  const [carteiras, setCarteiras] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [topClientes, setTopClientes] = useState([]);
+  const [topFornecedores, setTopFornecedores] = useState([]);
+  const [titulosVencidosReceber, setTitulosVencidosReceber] = useState([]);
+  const [titulosVencidosPagar, setTitulosVencidosPagar] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        const baseUrl = process.env.REACT_APP_API_URL || '';
+        const response = await fetch(`${baseUrl}/api/financeiro/dashboard`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.message || 'Falha ao carregar dashboard financeiro');
+        }
+        if (!isMounted) return;
+        setKpisData(data.kpis || {});
+        setBarData(data.barData || []);
+        setCarteiras(data.carteiras || []);
+        setFornecedores(data.fornecedores || []);
+        setTopClientes(data.topClientes || []);
+        setTopFornecedores(data.topFornecedores || []);
+        setTitulosVencidosReceber(data.titulosVencidosReceber || []);
+        setTitulosVencidosPagar(data.titulosVencidosPagar || []);
+      } catch (error) {
+        console.error('Erro ao buscar dashboard financeiro:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchDashboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // KPIs com gradientes
   const kpis = [
-    {
-      label: 'Total em Atrasos',
-      value: 'R$ 85.000',
-      gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)',
-    },
-    {
-      label: 'Total Pago no Período',
-      value: 'R$ 210.000',
-      gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)',
-    },
-    {
-      label: 'Índice de Inadimplência',
-      value: '8.5%',
-      gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)',
-    },
-    {
-      label: 'Limites Utilizados',
-      value: 'R$ 120.000',
-      gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)',
-    },
+    { label: 'A Receber', value: kpisData.a_receber ?? 0, gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' },
+    { label: 'A Pagar', value: kpisData.a_pagar ?? 0, gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)' },
+    { label: 'Total em Atrasos', value: kpisData.total_em_atrasos ?? 0, gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)' },
+    { label: 'Inadimplência', value: kpisData.inadimplencia ?? 0, isPercent: true, gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)' },
+    { label: 'PMR (dias)', value: kpisData.pmr ?? 0, isDays: true, tooltip: 'Prazo Médio de Recebimento (dias)', gradient: 'linear-gradient(90deg, #7ed957 0%, #ff9800 100%)' },
+    { label: 'PMP (dias)', value: kpisData.pmp ?? 0, isDays: true, tooltip: 'Prazo Médio de Pagamento (dias)', gradient: 'linear-gradient(90deg, #ff9800 0%, #1e466e 100%)' },
   ];
 
-  // Contas a receber/pagar por faixa
-  const contasReceber = [
-    { faixa: 'Vencido', valor: 85000 },
-    { faixa: 'Hoje', valor: 25000 },
-    { faixa: 'A Vencer', valor: 140000 },
-  ];
-  const contasPagar = [
-    { faixa: 'Vencido', valor: 20000 },
-    { faixa: 'Hoje', valor: 15000 },
-    { faixa: 'A Vencer', valor: 110000 },
-  ];
-
-  // Gráfico de barras: valores por vencimento
-  const barData = [
-    { faixa: 'Vencido', Receber: 85000, Pagar: 20000 },
-    { faixa: 'Hoje', Receber: 25000, Pagar: 15000 },
-    { faixa: 'A Vencer', Receber: 140000, Pagar: 110000 },
+  // Gráfico de fluxo de caixa (linha)
+  const fluxoCaixaData = [
+    { dia: '01/02', Entradas: 20000, Saidas: 12000, Saldo: 8000 },
+    { dia: '02/02', Entradas: 15000, Saidas: 9000, Saldo: 14000 },
+    { dia: '03/02', Entradas: 18000, Saidas: 11000, Saldo: 21000 },
+    { dia: '04/02', Entradas: 12000, Saidas: 8000, Saldo: 25000 },
+    { dia: '05/02', Entradas: 16000, Saidas: 9000, Saldo: 32000 },
+    { dia: '06/02', Entradas: 14000, Saidas: 10000, Saldo: 36000 },
+    { dia: '07/02', Entradas: 17000, Saidas: 12000, Saldo: 41000 },
   ];
 
-  // Gráfico de pizza: distribuição por carteira
-  const carteiras = [
-    { name: 'Carteira A', value: 40000 },
-    { name: 'Carteira B', value: 60000 },
-    { name: 'Carteira C', value: 80000 },
-    { name: 'Carteira D', value: 20000 },
-  ];
+  // Dados dos gráficos são carregados do backend
+
   const PIE_COLORS = ['#22336b', '#7ecbff', '#43a047', '#ff9800'];
 
-  // Títulos vencidos (tabela)
-  const titulosVencidos = [
-    { titulo: '12345', cliente: 'Cliente A', vencimento: '2025-12-01', valor: 'R$ 15.000', status: 'Vencido' },
-    { titulo: '12346', cliente: 'Cliente B', vencimento: '2025-12-02', valor: 'R$ 20.000', status: 'Vencido' },
-    { titulo: '12347', cliente: 'Cliente C', vencimento: '2025-12-03', valor: 'R$ 25.000', status: 'Vencido' },
-    { titulo: '12348', cliente: 'Cliente D', vencimento: '2025-12-04', valor: 'R$ 25.000', status: 'Vencido' },
-  ];
+  // Tabelas: dados carregados do backend
 
-  // Bancos/carteiras com maior saldo (tabela)
-  const bancosCarteiras = [
-    { nome: 'Banco XPTO', saldo: 'R$ 80.000' },
-    { nome: 'Banco ABC', saldo: 'R$ 60.000' },
-    { nome: 'Carteira A', saldo: 'R$ 40.000' },
-    { nome: 'Carteira B', saldo: 'R$ 30.000' },
-  ];
+  // ===== JSX =====
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+        <Card sx={{ p: 4, borderRadius: 3, boxShadow: 4, minWidth: 320, textAlign: 'center' }}>
+          <CircularProgress size={56} thickness={4} />
+          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
+            Carregando dados financeiros
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+            Aguarde enquanto atualizamos o dashboard.
+          </Typography>
+        </Card>
+      </Box>
+    );
+  }
 
-  const navigate = useNavigate();
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff' }}>
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
@@ -90,117 +119,252 @@ function Financeiro() {
             <HomeIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Dashboard de Financeiro
+            Dashboard Financeiro
           </Typography>
-          {/* Ícones removidos conforme solicitado */}
         </Toolbar>
       </AppBar>
+
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
-        {/* KPIs */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-          {kpis.map((kpi, idx) => (
-            <Card key={idx}
-              sx={{
-                flex: 1,
-                maxWidth: '100%',
-                background: kpi.gradient,
-                color: '#fff',
-                borderRadius: 2,
-                boxShadow: 3,
-                minHeight: 100,
-                height: 100,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'transform 0.2s',
-                '&:hover': { transform: 'scale(1.03)' },
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{kpi.label}</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>{kpi.value}</Typography>
-            </Card>
-          ))}
+        {/* KPIs com Gradientes */}
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 3,
+            mb: 4,
+            width: '100%',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          }}
+        >
+          {kpis.map((kpi, idx) => {
+            const card = (
+              <Card
+                sx={{
+                  width: '100%',
+                  background: kpi.gradient,
+                  color: '#fff',
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  minHeight: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'scale(1.03)' },
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ fontWeight: 500, textAlign: 'center' }}>{kpi.label}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  {kpi.isPercent ? `${kpi.value}%` : kpi.isDays ? `${kpi.value}` : formatCurrency(kpi.value)}
+                </Typography>
+              </Card>
+            );
+
+            return kpi.tooltip ? (
+              <MuiTooltip key={idx} title={kpi.tooltip} arrow>
+                {card}
+              </MuiTooltip>
+            ) : (
+              <Box key={idx}>{card}</Box>
+            );
+          })}
         </Box>
 
-        {/* Linha: Gráfico de barras (valores por vencimento) e pizza (carteiras) */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%' }}>
-          <Card sx={{ flex: 2, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 380 }}>
+        {/* Linha 1: Fluxo de Caixa (2/3) e Vencimento (1/3) */}
+        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%', flexDirection: { xs: 'column', md: 'row' } }}>
+          {/* Fluxo de Caixa */}
+          <Card sx={{ flex: { xs: 1, md: 2 }, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 300, md: 380 } }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Fluxo de Caixa</Typography>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={fluxoCaixaData} margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="dia" />
+                <YAxis width={70} tickFormatter={v => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} />
+                <RechartsTooltip formatter={(value) => formatCurrency(value)} />
+                <Legend />
+                <Line type="monotone" dataKey="Entradas" stroke="#43a047" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="Saidas" stroke="#ff9800" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Valores por Vencimento */}
+          <Card sx={{ flex: { xs: 1, md: 1 }, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 300, md: 380 } }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Valores por Vencimento</Typography>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={barData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="faixa" />
                 <YAxis />
-                <Tooltip />
+                <RechartsTooltip formatter={(value) => formatCurrency(value)} />
                 <Legend />
-                <Bar dataKey="Receber" fill="#7ecbff" radius={[8, 8, 0, 0]} name="A Receber" />
-                <Bar dataKey="Pagar" fill="#43a047" radius={[8, 8, 0, 0]} name="A Pagar" />
+                <Bar dataKey="Receber" fill="#43a047" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="Pagar" fill="#ff9800" radius={[8, 8, 0, 0]} />
               </BarChart>
-            </ResponsiveContainer>
-          </Card>
-          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 380 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Distribuição por Carteira</Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={carteiras} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                  {carteiras.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
             </ResponsiveContainer>
           </Card>
         </Box>
 
-        {/* Linha: Tabelas (títulos vencidos e bancos/carteiras) */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%' }}>
-          <Card sx={{ flex: 2, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 380 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Títulos Vencidos</Typography>
-            <TableContainer component={Paper}>
-              <Table size="small">
+        {/* Linha 2: Composição Recebíveis (1/2) e Pagáveis (1/2) */}
+        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%', flexDirection: { xs: 'column', md: 'row' } }}>
+          {/* Composição de Recebíveis */}
+          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 350, md: 380 } }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Composição de Recebíveis</Typography>
+            <Box sx={{ width: '100%', height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={carteiras}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={75}
+                    label={false}
+                  >
+                    {carteiras.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip formatter={(value) => formatCurrency(value)} />
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    wrapperStyle={{ maxHeight: 260, overflowY: 'auto' }}
+                    formatter={(value) => (value.length > 28 ? `${value.slice(0, 28)}...` : value)}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          </Card>
+
+          {/* Composição de Pagáveis */}
+          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 350, md: 380 } }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Composição de Pagáveis</Typography>
+            <Box sx={{ width: '100%', height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={fornecedores}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={75}
+                    label={false}
+                  >
+                    {fornecedores.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip formatter={(value) => formatCurrency(value)} />
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    wrapperStyle={{ maxHeight: 260, overflowY: 'auto' }}
+                    formatter={(value) => (value.length > 28 ? `${value.slice(0, 28)}...` : value)}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          </Card>
+        </Box>
+
+        {/* Linha 3: Produtos e Tabelas (2/3 e 1/3) */}
+        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%', flexDirection: { xs: 'column', md: 'row' } }}>
+          {/* Top Clientes */}
+          <Card sx={{ flex: { xs: 1, md: 2 }, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: { xs: 450, md: 500 } }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Top Clientes</Typography>
+            <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 200, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Título</TableCell>
-                    <TableCell>Cliente</TableCell>
-                    <TableCell>Vencimento</TableCell>
-                    <TableCell>Valor</TableCell>
-                    <TableCell>Status</TableCell>
+                    <TableCell sx={{ backgroundColor: '#1e466e', color: 'white', fontWeight: 600 }}>Código - Nome</TableCell>
+                    <TableCell align="right" sx={{ backgroundColor: '#1e466e', color: 'white', fontWeight: 600 }}>Valor</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {titulosVencidos.map((row, idx) => (
+                  {topClientes.map((item, idx) => (
                     <TableRow key={idx}>
-                      <TableCell>{row.titulo}</TableCell>
-                      <TableCell>{row.cliente}</TableCell>
-                      <TableCell>{row.vencimento}</TableCell>
-                      <TableCell>{row.valor}</TableCell>
-                      <TableCell sx={{ color: '#d32f2f', fontWeight: 700 }}>{row.status}</TableCell>
+                      <TableCell>{item.cliente}</TableCell>
+                      <TableCell align="right">{formatCurrency(item.valor)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, mt: 3 }}>Top Fornecedores</Typography>
+            <TableContainer component={Paper} sx={{ maxHeight: 200, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ backgroundColor: '#1e466e', color: 'white', fontWeight: 600 }}>Código - Nome</TableCell>
+                    <TableCell align="right" sx={{ backgroundColor: '#1e466e', color: 'white', fontWeight: 600 }}>Valor</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {topFornecedores.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{item.fornecedor}</TableCell>
+                      <TableCell align="right">{formatCurrency(item.valor)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
           </Card>
-          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 380 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Bancos/Carteiras com Maior Saldo</Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nome</TableCell>
-                  <TableCell>Saldo</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {bancosCarteiras.map((row, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{row.nome}</TableCell>
-                    <TableCell>{row.saldo}</TableCell>
+
+          {/* Títulos Vencidos */}
+          <Card sx={{ flex: { xs: 1, md: 1 }, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: { xs: 450, md: 500 } }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Títulos Vencidos - Receber</Typography>
+            <TableContainer component={Paper} sx={{ flex: 1, mb: 3, maxHeight: 200, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Nº Título</TableCell>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Cliente</TableCell>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Vencimento</TableCell>
+                    <TableCell align="right" sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Valor</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {titulosVencidosReceber.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell sx={{ fontSize: 12 }}>{item.titulo}</TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>{item.cliente}</TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>{formatDate(item.vencimento)}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 12 }}>{formatCurrency(item.valor)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Títulos Vencidos - Pagar</Typography>
+            <TableContainer component={Paper} sx={{ maxHeight: 200, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Nº Título</TableCell>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Fornecedor</TableCell>
+                    <TableCell sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Vencimento</TableCell>
+                    <TableCell align="right" sx={{ backgroundColor: '#d32f2f', color: 'white', fontWeight: 600 }}>Valor</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {titulosVencidosPagar.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell sx={{ fontSize: 12 }}>{item.titulo}</TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>{item.fornecedor}</TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>{formatDate(item.vencimento)}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 12 }}>{formatCurrency(item.valor)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Card>
         </Box>
       </Container>

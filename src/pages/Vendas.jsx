@@ -128,6 +128,11 @@ function Vendas() {
   const [vendedores, setVendedores] = useState([]);
   const [loadingVendedores, setLoadingVendedores] = useState(true);
 
+  // Filtro para ignorar vendedores DIRETO, LOJAS e E-COMMERCE
+  const vendedoresFiltrados = vendedores.filter(
+    v => !['DIRETO', 'LOJAS', 'E-COMMERCE'].includes((v.vendedor || '').toUpperCase())
+  );
+
   useEffect(() => {
     // Busca vendas por vendedor do mês atual
     const fetchVendedores = async () => {
@@ -157,17 +162,14 @@ function Vendas() {
 
   const navigate = useNavigate();
   useEffect(() => {
-    // Busca as KPIs do backend Flask
+    // Busca as KPIs do backend Flask (sem startDate/endDate para obter Cache + Hoje)
     const fetchKpis = async () => {
       setLoadingKpis(true);
       try {
-        const today = new Date();
-        const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const response = await fetch('http://192.168.20.10:5000/api/kpis/sales', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ startDate, endDate })
+          body: JSON.stringify({})  // Sem parâmetros = retorna Cache + Hoje
         });
         const data = await response.json();
         if (response.ok) {
@@ -346,7 +348,7 @@ function Vendas() {
               <Box sx={{ textAlign: 'center', mt: 4 }}>
                 <LoadingSpinner message="Carregando vendas por vendedor..." />
               </Box>
-            ) : vendedores.length === 0 ? (
+            ) : vendedoresFiltrados.length === 0 ? (
               <Box sx={{ textAlign: 'center', mt: 4 }}>
                 <Typography variant="body1" color="text.secondary">Nenhuma venda encontrada no período.</Typography>
               </Box>
@@ -360,7 +362,7 @@ function Vendas() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {vendedores.map((row, idx) => (
+                    {vendedoresFiltrados.map((row, idx) => (
                       <TableRow key={idx}>
                         <TableCell>{row.vendedor}</TableCell>
                         <TableCell>{row.vendas}</TableCell>

@@ -85,7 +85,24 @@ function Clientes() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             DASHBOARD DE CLIENTES
           </Typography>
-          {/* Ícones removidos conforme solicitado */}
+          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Atualizar Dados">
+              <IconButton
+                color="inherit"
+                aria-label="Atualizar Dados"
+                onClick={() => {/* TODO: chamar função de atualização de dados */}}
+                sx={{ ml: 1, p: 1, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', transition: 'background 0.2s', '&:hover': { background: 'rgba(255,255,255,0.18)' } }}
+                size="large"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M1 20v-6h6" />
+                  <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10" />
+                  <path d="M1 14a9 9 0 0 0 14.13 3.36L23 14" />
+                </svg>
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
