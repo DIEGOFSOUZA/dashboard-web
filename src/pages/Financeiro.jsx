@@ -21,6 +21,9 @@ function formatDate(value) {
 function Financeiro() {
   const navigate = useNavigate();
 
+  // MODO CACHE-ONLY: Sem auto-refresh, apenas leitura do cache
+  // Cache é atualizado diariamente às 03:00 pelo scheduler
+
   const [kpisData, setKpisData] = useState({});
   const [barData, setBarData] = useState([]);
   const [carteiras, setCarteiras] = useState([]);
@@ -30,20 +33,60 @@ function Financeiro() {
   const [titulosVencidosReceber, setTitulosVencidosReceber] = useState([]);
   const [titulosVencidosPagar, setTitulosVencidosPagar] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSecondary, setLoadingSecondary] = useState(true);
 
+  // Carregamento APENAS DO CACHE (sem chamadas API)
   useEffect(() => {
     let isMounted = true;
 
-    const fetchDashboard = async () => {
+    const loadCacheData = async () => {
+      console.log('[Financeiro] 🔄 Iniciando carregamento do cache...');
+      
       try {
-        setLoading(true);
-        const baseUrl = process.env.REACT_APP_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/financeiro/dashboard`);
-        const data = await response.json();
+        // Buscar arquivo de cache estático via API
+        const url = '/api/cache/financeiro_dashboard.json';
+        console.log('[Financeiro] 📡 Fazendo requisição:', url);
+        
+        const response = await fetch(url);
+        console.log('[Financeiro] 📊 Resposta recebida:', {
+          status: response.status,
+          ok: response.ok,
+          contentType: response.headers.get('content-type')
+        });
+        
         if (!response.ok) {
-          throw new Error(data?.message || 'Falha ao carregar dashboard financeiro');
+          // Se cache não existe, mostrar zeros
+          console.warn('[Financeiro] ⚠️ Cache não encontrado (status:', response.status, '), exibindo zeros');
+          if (isMounted) {
+            setKpisData({});
+            setBarData([]);
+            setCarteiras([]);
+            setFornecedores([]);
+            setTopClientes([]);
+            setTopFornecedores([]);
+            setTitulosVencidosReceber([]);
+            setTitulosVencidosPagar([]);
+            setLoading(false);
+            setLoadingSecondary(false);
+          }
+          return;
         }
-        if (!isMounted) return;
+        
+        const cacheContent = await response.json();
+        console.log('[Financeiro] 📦 Cache parseado:', {
+          timestamp: cacheContent.timestamp,
+          hasData: !!cacheContent.data,
+          kpis: cacheContent.data?.kpis
+        });
+        
+        const data = cacheContent.data || {};
+        
+        if (!isMounted) {
+          console.log('[Financeiro] ⚠️ Componente desmontado, abortando');
+          return;
+        }
+        
+        // Carregar todos os dados do cache
         setKpisData(data.kpis || {});
         setBarData(data.barData || []);
         setCarteiras(data.carteiras || []);
@@ -52,17 +95,40 @@ function Financeiro() {
         setTopFornecedores(data.topFornecedores || []);
         setTitulosVencidosReceber(data.titulosVencidosReceber || []);
         setTitulosVencidosPagar(data.titulosVencidosPagar || []);
+        
+        console.log('[Financeiro] ✅ Cache carregado com sucesso! Timestamp:', cacheContent.timestamp);
+        console.log('[Financeiro] 📊 Dados carregados:', {
+          kpis: Object.keys(data.kpis || {}).length,
+          barData: (data.barData || []).length,
+          carteiras: (data.carteiras || []).length,
+          topClientes: (data.topClientes || []).length
+        });
+        
       } catch (error) {
-        console.error('Erro ao buscar dashboard financeiro:', error);
+        console.error('[Financeiro] ❌ Erro ao carregar cache:', error);
+        // Em caso de erro, mostrar zeros
+        if (isMounted) {
+          setKpisData({});
+          setBarData([]);
+          setCarteiras([]);
+          setFornecedores([]);
+          setTopClientes([]);
+          setTopFornecedores([]);
+          setTitulosVencidosReceber([]);
+          setTitulosVencidosPagar([]);
+        }
       } finally {
         if (isMounted) {
+          console.log('[Financeiro] 🏁 Finalizando loading states');
           setLoading(false);
+          setLoadingSecondary(false);
         }
       }
     };
 
-    fetchDashboard();
+    loadCacheData();
     return () => {
+      console.log('[Financeiro] 🔚 Componente desmontado');
       isMounted = false;
     };
   }, []);

@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { CacheProvider } from './context/CacheContext';
 import Home from './pages/Home';
 import Vendas from './pages/Vendas';
 import Financeiro from './pages/Financeiro';
@@ -9,16 +10,18 @@ import Comercial from './pages/Comercial';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/vendas" element={<Vendas />} />
-        <Route path="/financeiro" element={<Financeiro />} />
-        <Route path="/estoque" element={<Estoque />} />
-        <Route path="/clientes" element={<Clientes />} />
-        <Route path="/comercial" element={<Comercial />} />
-      </Routes>
-    </Router>
+    <CacheProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/vendas" element={<Vendas />} />
+          <Route path="/financeiro" element={<Financeiro />} />
+          <Route path="/estoque" element={<Estoque />} />
+          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/comercial" element={<Comercial />} />
+        </Routes>
+      </Router>
+    </CacheProvider>
   );
 }
 

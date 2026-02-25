@@ -1,5 +1,5 @@
-import { Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
+import { Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, Tooltip } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
@@ -10,77 +10,72 @@ import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function Estoque() {
-  // KPIs principais
-  const kpis = [
-    {
-      label: 'Total em Estoque',
-      value: 'R$ 1.500.000',
-      icon: <InventoryIcon sx={{ fontSize: 36, color: '#fff' }} />,
-      gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)',
-    },
-    {
-      label: 'Produtos Abaixo do Mínimo',
-      value: '18',
-      icon: <WarningAmberIcon sx={{ fontSize: 36, color: '#fff' }} />,
-      gradient: 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)',
-    },
-    {
-      label: 'Giro de Estoque',
-      value: '2.1x / 30 dias',
-      icon: <TrendingUpIcon sx={{ fontSize: 36, color: '#fff' }} />,
-      gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)',
-    },
-    {
-      label: 'Produtos Parados',
-      value: '7',
-      icon: <AccessTimeIcon sx={{ fontSize: 36, color: '#fff' }} />,
-      gradient: 'linear-gradient(90deg, #607d8b 0%, #90a4ae 100%)',
-    },
-  ];
-
-  // Gráfico de barras - Estoque por Categoria
-  const barData = [
-    { categoria: 'Eletrônicos', atual: 1100000, minimo: 1050000 },
-    { categoria: 'Roupas', atual: 800000, minimo: 780000 },
-    { categoria: 'Alimentos', atual: 550000, minimo: 520000 },
-    { categoria: 'Bebidas', atual: 300000, minimo: 280000 },
-  ];
-
-  // Gráfico de linha - Evolução do Giro de Estoque
-  const lineData = [
-    { mes: 'Jan', giro: 0.5 },
-    { mes: 'Fev', giro: 0.7 },
-    { mes: 'Mar', giro: 0.9 },
-    { mes: 'Abr', giro: 1.1 },
-    { mes: 'Mai', giro: 1.3 },
-    { mes: 'Jun', giro: 1.5 },
-    { mes: 'Jul', giro: 1.7 },
-    { mes: 'Ago', giro: 1.9 },
-    { mes: 'Set', giro: 2.1 },
-    { mes: 'Out', giro: 2.2 },
-    { mes: 'Nov', giro: 2.4 },
-    { mes: 'Dez', giro: 2.6 },
-  ];
-
-  // Tabela Estoque por Depósito / Loja
-  const estoqueDeposito = [
-    { loja: 'Loja A', quantidade: 60, valor: 'R$ 1.500.000' },
-    { loja: 'Depósito 1', quantidade: 100, valor: 'R$ 2.000.000' },
-    { loja: 'Depósito 2', quantidade: 90, valor: 'R$ 1.000.000' },
-    { loja: 'Loja B', quantidade: 10, valor: 'R$ 500.000' },
-  ];
-
-  // Tabela Produtos com Estoque Abaixo do Mínimo
-  const produtosCriticos = [
-    { produto: 'Produto 1', categoria: 'Eletrônicos', atual: 25, minimo: 30, status: 'Crítico' },
-    { produto: 'Produto 2', categoria: 'Roupas', atual: 25, minimo: 30, status: 'Crítico' },
-    { produto: 'Produto 3', categoria: 'Alimentos', atual: 20, minimo: 25, status: 'Crítico' },
-    { produto: 'Produto 4', categoria: 'Bebidas', atual: 15, minimo: 15, status: 'Crítico' },
-  ];
-
   const navigate = useNavigate();
+  
+  // Estados para dados do backend
+  const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState([]);
+  const [barData, setBarData] = useState([]);
+  const [lineData, setLineData] = useState([]);
+  const [estoqueDeposito, setEstoqueDeposito] = useState([]);
+  const [produtosCriticos, setProdutosCriticos] = useState([]);
+
+  // Buscar dados do backend
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/estoque');
+      const data = response.data;
+
+      // Montar KPIs
+      const kpisData = [
+        {
+          label: 'Total em Estoque',
+          value: data.kpis.total_estoque || 'R$ 0',
+          icon: <InventoryIcon sx={{ fontSize: 36, color: '#fff' }} />,
+          gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)',
+        },
+        {
+          label: 'Produtos Abaixo do Mínimo',
+          value: data.kpis.produtos_abaixo_minimo || 0,
+          icon: <WarningAmberIcon sx={{ fontSize: 36, color: '#fff' }} />,
+          gradient: 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)',
+        },
+        {
+          label: 'Giro de Estoque',
+          value: data.kpis.giro_estoque || '0x / 30 dias',
+          icon: <TrendingUpIcon sx={{ fontSize: 36, color: '#fff' }} />,
+          gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)',
+        },
+        {
+          label: 'Produtos Parados',
+          value: data.kpis.produtos_parados || 0,
+          icon: <AccessTimeIcon sx={{ fontSize: 36, color: '#fff' }} />,
+          gradient: 'linear-gradient(90deg, #607d8b 0%, #90a4ae 100%)',
+        },
+      ];
+
+      setKpis(kpisData);
+      setBarData(data.estoque_por_categoria || []);
+      setLineData(data.evolucao_giro || []);
+      setEstoqueDeposito(data.estoque_por_deposito || []);
+      setProdutosCriticos(data.produtos_criticos || []);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Erro ao buscar dados de estoque:', error);
+      setLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff' }}>
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
@@ -96,7 +91,7 @@ function Estoque() {
               <IconButton
                 color="inherit"
                 aria-label="Atualizar Dados"
-                onClick={() => {/* TODO: chamar função de atualização de dados */}}
+                onClick={fetchData}
                 sx={{ ml: 1, p: 1, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', transition: 'background 0.2s', '&:hover': { background: 'rgba(255,255,255,0.18)' } }}
                 size="large"
               >
@@ -151,7 +146,7 @@ function Estoque() {
               <BarChart data={barData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <XAxis dataKey="categoria" />
                 <YAxis />
-                <Tooltip />
+                <RechartsTooltip />
                 <Legend />
                 <Bar dataKey="atual" fill="#1976d2" name="Atual" radius={[8, 8, 0, 0]} />
                 <Bar dataKey="minimo" fill="#43a047" name="Mínimo" radius={[8, 8, 0, 0]} />
@@ -164,7 +159,7 @@ function Estoque() {
               <LineChart data={lineData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <XAxis dataKey="mes" />
                 <YAxis />
-                <Tooltip />
+                <RechartsTooltip />
                 <Legend />
                 <Line type="monotone" dataKey="giro" stroke="#22336b" strokeWidth={3} dot={{ r: 5 }} />
               </LineChart>

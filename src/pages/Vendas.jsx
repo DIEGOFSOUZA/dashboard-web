@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, Skeleton
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate } from 'react-router-dom';
@@ -13,29 +13,29 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function Vendas() {
-  // KPIs dinâmicos
+  // KPIs dinâmicos - Inicialmente carrega do cache
   const [kpis, setKpis] = useState([
-    { label: 'Total Vendido no Mês', value: '...', gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' },
-    { label: 'Total Vendido na Semana', value: '...', gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)' },
-    { label: 'Total Vendido no Dia', value: '...', gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)' },
-    { label: 'Ticket Médio', value: '...', gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)' },
-    { label: 'Pedidos Emitidos', value: '...', gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)' },
+    { label: 'Total Vendido no Mês', value: '...', gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', isLoading: false },
+    { label: 'Total Vendido na Semana', value: '...', gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)', isLoading: false },
+    { label: 'Total Vendido no Dia', value: '...', gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)', isLoading: true },
+    { label: 'Ticket Médio', value: '...', gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)', isLoading: false },
+    { label: 'Pedidos Emitidos', value: '...', gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)', isLoading: true },
   ]);
 
   // Evolução do faturamento (linha) - dinâmico
   const [faturamentoData, setFaturamentoData] = useState([]);
 
-  // Estado de loading para KPIs e faturamento
-  const [loading, setLoading] = useState(true);
-  const [loadingKpis, setLoadingKpis] = useState(true);
+  // Estado de loading para componentes secundários (gráficos, tabelas)
+
   const [loadingFaturamento, setLoadingFaturamento] = useState(true);
+  const [loadingTodayKpis, setLoadingTodayKpis] = useState(true);
 
   useEffect(() => {
     // Busca evolução do faturamento dos últimos 6 meses
     const fetchFaturamento = async () => {
       setLoadingFaturamento(true);
       try {
-        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-evolution');
+        const response = await fetch('/api/kpis/sales-evolution');
         const data = await response.json();
         if (response.ok && data.evolucao) {
           // Ajusta para formato do gráfico
@@ -66,7 +66,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://192.168.20.10:5000/api/kpis/top-products', {
+        const response = await fetch('/api/kpis/top-products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -105,7 +105,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-by-channel', {
+        const response = await fetch('/api/kpis/sales-by-channel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -128,11 +128,6 @@ function Vendas() {
   const [vendedores, setVendedores] = useState([]);
   const [loadingVendedores, setLoadingVendedores] = useState(true);
 
-  // Filtro para ignorar vendedores DIRETO, LOJAS e E-COMMERCE
-  const vendedoresFiltrados = vendedores.filter(
-    v => !['DIRETO', 'LOJAS', 'E-COMMERCE'].includes((v.vendedor || '').toUpperCase())
-  );
-
   useEffect(() => {
     // Busca vendas por vendedor do mês atual
     const fetchVendedores = async () => {
@@ -141,7 +136,7 @@ function Vendas() {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
         const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales-by-representative', {
+        const response = await fetch('/api/kpis/sales-by-representative', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -162,47 +157,69 @@ function Vendas() {
 
   const navigate = useNavigate();
   useEffect(() => {
-    // Busca as KPIs do backend Flask (sem startDate/endDate para obter Cache + Hoje)
-    const fetchKpis = async () => {
-      setLoadingKpis(true);
+    // PASSO 1: Buscar dados do cache imediatamente
+    const loadCacheKpis = async () => {
       try {
-        const response = await fetch('http://192.168.20.10:5000/api/kpis/sales', {
+        // POST sem parâmetros para pegar cache
+        const response = await fetch('/api/kpis/sales', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})  // Sem parâmetros = retorna Cache + Hoje
+          body: JSON.stringify({})
         });
         const data = await response.json();
         if (response.ok) {
-          setKpis([
-            { label: 'Total Vendido no Mês', value: `R$ ${Number(data.total_vendido_mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' },
-            { label: 'Total Vendido na Semana', value: `R$ ${Number(data.total_vendido_semana).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #1e466e 0%, #1e6e5c 100%)' },
-            { label: 'Total Vendido no Dia', value: `R$ ${Number(data.total_vendido_dia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #1e6e5c 0%, #43a047 100%)' },
-            { label: 'Ticket Médio', value: `R$ ${Number(data.ticket_medio).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, gradient: 'linear-gradient(90deg, #43a047 0%, #7ed957 100%)' },
-            { label: 'Pedidos Emitidos', value: `${data.pedidos_emitidos}`, gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)' },
+          // Mostrar cache imediatamente (apenas dados que vêm do cache)
+          setKpis(prev => [
+            { ...prev[0], value: `R$ ${Number(data.total_vendido_mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false },
+            { ...prev[1], value: `R$ ${Number(data.total_vendido_semana).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false },
+            { ...prev[2], value: prev[2].value, isLoading: true }, // Continua loading para o Dia
+            { ...prev[3], value: `R$ ${Number(data.ticket_medio).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false },
+            { ...prev[4], value: prev[4].value, isLoading: true }, // Continua loading para Pedidos
+          ]);
+          
+          // PASSO 2: Buscar dados de hoje e atualizar apenas Dia e Pedidos
+          fetchTodayKpis(data);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar cache KPIs:', err);
+      }
+    };
+    
+    const fetchTodayKpis = async (cacheData) => {
+      setLoadingTodayKpis(true);
+      try {
+        const today = new Date();
+        const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const response = await fetch('/api/kpis/sales', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startDate, endDate })
+        });
+        const todayData = await response.json();
+        if (response.ok) {
+          // Atualizar apenas Dia e Pedidos com os dados de hoje
+          setKpis(prev => [
+            prev[0], // Mês (mantém cache)
+            prev[1], // Semana (mantém cache)
+            { ...prev[2], value: `R$ ${Number(todayData.total_vendido_dia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false }, // Dia (atualizado hoje)
+            prev[3], // Ticket (mantém cache)
+            { ...prev[4], value: `${todayData.pedidos_emitidos}`, isLoading: false }, // Pedidos (atualizado hoje)
           ]);
         }
       } catch (err) {
-        // Em caso de erro, mantém os valores como '...'
+        console.error('Erro ao carregar dados de hoje:', err);
+        // Manter valores do cache mesmo se houver erro
       }
-      setLoadingKpis(false);
+      setLoadingTodayKpis(false);
     };
-    fetchKpis();
+    
+    loadCacheKpis();
   }, []);
-
-  // Atualiza loading geral
-  useEffect(() => {
-    setLoading(loadingKpis || loadingFaturamento);
-  }, [loadingKpis, loadingFaturamento]);
 
   // Debug: mostrar os valores dos 6 meses no console
   console.log('Evolução do faturamento (6 meses):', faturamentoData);
-  if (loading) {
-    return (
-      <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <LoadingSpinner message="Aguarde, carregando dados de vendas..." />
-      </Box>
-    );
-  }
+  
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', background: '#fff' }}>
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
@@ -236,10 +253,22 @@ function Vendas() {
                 justifyContent: 'center',
                 transition: 'transform 0.2s',
                 '&:hover': { transform: 'scale(1.03)' },
+                position: 'relative',
               }}
             >
               <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{kpi.label}</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>{kpi.value}</Typography>
+              {kpi.isLoading ? (
+                <Box sx={{ position: 'relative' }}>
+                  <Skeleton 
+                    variant="text" 
+                    width={140} 
+                    height={40} 
+                    sx={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }} 
+                  />
+                </Box>
+              ) : (
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>{kpi.value}</Typography>
+              )}
             </Card>
           ))}
         </Box>
@@ -348,7 +377,7 @@ function Vendas() {
               <Box sx={{ textAlign: 'center', mt: 4 }}>
                 <LoadingSpinner message="Carregando vendas por vendedor..." />
               </Box>
-            ) : vendedoresFiltrados.length === 0 ? (
+            ) : vendedores.length === 0 ? (
               <Box sx={{ textAlign: 'center', mt: 4 }}>
                 <Typography variant="body1" color="text.secondary">Nenhuma venda encontrada no período.</Typography>
               </Box>
@@ -362,7 +391,7 @@ function Vendas() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {vendedoresFiltrados.map((row, idx) => (
+                    {vendedores.map((row, idx) => (
                       <TableRow key={idx}>
                         <TableCell>{row.vendedor}</TableCell>
                         <TableCell>{row.vendas}</TableCell>
