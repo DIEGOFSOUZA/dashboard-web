@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Tooltip as MuiTooltip
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate } from 'react-router-dom';
@@ -165,24 +165,6 @@ function ComercialDashboard() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             DASHBOARD COMERCIAL
           </Typography>
-          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
-            <MuiTooltip title="Atualizar Dados">
-              <IconButton
-                color="inherit"
-                aria-label="Atualizar Dados"
-                onClick={loadDashboard}
-                sx={{ ml: 1, p: 1, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', transition: 'background 0.2s', '&:hover': { background: 'rgba(255,255,255,0.18)' } }}
-                size="large"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                  <polyline points="23 4 23 10 17 10" />
-                  <path d="M1 20v-6h6" />
-                  <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10" />
-                  <path d="M1 14a9 9 0 0 0 14.13 3.36L23 14" />
-                </svg>
-              </IconButton>
-            </MuiTooltip>
-          </Box>
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
@@ -222,85 +204,95 @@ function ComercialDashboard() {
             </Card>
           ))}
         </Box>
-        {/* Gráficos */}
+        {/* Linha 2: Gráficos principais */}
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mb: 4, width: '100%' }}>
-          <Card sx={{ flex: 1.5, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 340, mb: { xs: 2, md: 0 } }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Funil de Vendas</Typography>
-            <ResponsiveContainer width="100%" height={220}>
-              <FunnelChart>
-                <RechartsTooltip />
-                <Funnel dataKey="valor" data={funilData} isAnimationActive>
-                  <LabelList dataKey="etapa" position="right" />
-                </Funnel>
-              </FunnelChart>
-            </ResponsiveContainer>
-          </Card>
-          <Card sx={{ flex: 1.2, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 420 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Pedidos por Vendedor</Typography>
+          
+          {/* Coluna esquerda: Funil + Status */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Card sx={{ borderRadius: 3, boxShadow: 3, p: 3, flex: 1 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Funil de Vendas</Typography>
+              <ResponsiveContainer width="100%" height={200}>
+                <FunnelChart>
+                  <RechartsTooltip />
+                  <Funnel dataKey="valor" data={funilData} isAnimationActive>
+                    <LabelList dataKey="etapa" position="right" />
+                  </Funnel>
+                </FunnelChart>
+              </ResponsiveContainer>
+            </Card>
+            <Card sx={{ borderRadius: 3, boxShadow: 3, p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Pedidos por Status</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {pedidosStatus.map((row, idx) => {
+                  const colorMap = {
+                    'Em andamento': { bg: '#e3f2fd', color: '#1565c0', border: '#1976d2' },
+                    'Bloqueado': { bg: '#fff3e0', color: '#e65100', border: '#ff9800' },
+                    'Atendido': { bg: '#e8f5e9', color: '#2e7d32', border: '#43a047' },
+                    'Cancelado': { bg: '#ffebee', color: '#c62828', border: '#ef5350' },
+                    'Parcialmente atendido': { bg: '#f3e5f5', color: '#6a1b9a', border: '#9c27b0' },
+                  };
+                  const style = colorMap[row.status] || { bg: '#f5f5f5', color: '#333', border: '#999' };
+                  return (
+                    <Box key={idx} sx={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      backgroundColor: style.bg, borderLeft: `4px solid ${style.border}`,
+                      borderRadius: 1.5, px: 2, py: 1
+                    }}>
+                      <Typography sx={{ fontWeight: 500, fontSize: 14, color: style.color }}>{row.status}</Typography>
+                      <Typography sx={{ fontWeight: 700, fontSize: 18, color: style.color }}>{row.quantidade}</Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Card>
+          </Box>
+
+          {/* Coluna central: Pedidos por Vendedor */}
+          <Card sx={{ flex: 1.6, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>Pedidos por Vendedor</Typography>
             <Typography variant="caption" sx={{ mb: 1.5, color: 'text.secondary' }}>Top 10 vendedores por quantidade de pedidos</Typography>
             <ResponsiveContainer width="100%" height={vendedorChartHeight}>
-              <BarChart layout="vertical" data={pedidosVendedorTop} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <BarChart layout="vertical" data={pedidosVendedorTop} margin={{ top: 10, right: 50, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis type="number" allowDecimals={false} />
                 <YAxis
                   type="category"
                   dataKey="vendedor"
-                  width={190}
+                  width={200}
                   tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => truncateLabel(v, 22)}
                 />
                 <RechartsTooltip
-                  formatter={(value, _name, item) => [`${Number(value || 0)} (Top ${item?.payload?.rank || '-'})`, 'Pedidos']}
+                  formatter={(value, _name, item) => [`${Number(value || 0)} pedidos (Top ${item?.payload?.rank || '-'})`, 'Pedidos']}
                   labelFormatter={(label) => `Vendedor: ${label}`}
                 />
-                <Bar dataKey="pedidos" fill="#1976d2" name="Pedidos" radius={[0, 8, 8, 0]}>
-                  <LabelList dataKey="pedidos" position="right" />
+                <Bar dataKey="pedidos" fill="#1976d2" name="Pedidos" radius={[0, 6, 6, 0]}>
+                  <LabelList dataKey="pedidos" position="right" style={{ fontSize: 12, fontWeight: 600 }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Card>
-          <Card sx={{ flex: 0.9, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 340 }}>
+
+          {/* Coluna direita: Previsão vs Realizado */}
+          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Previsão vs Realizado</Typography>
-            <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
               Conversão da previsão: {metaResumo.atingimento.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
             </Typography>
             <Typography variant="body2" sx={{ mb: 2, color: metaResumo.diferenca >= 0 ? 'success.main' : 'error.main', fontWeight: 600 }}>
               Gap da previsão: {metaResumo.diferenca >= 0 ? '+' : ''}{formatCurrency(metaResumo.diferenca)}
             </Typography>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={230}>
               <LineChart data={metaRealizado} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(value) => formatCurrencyCompact(value)} />
+                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(value) => formatCurrencyCompact(value)} tick={{ fontSize: 11 }} />
                 <RechartsTooltip formatter={(value) => formatCurrency(value)} />
                 <Legend />
                 <Line type="monotone" dataKey="meta" stroke="#22336b" strokeWidth={3} dot={{ r: 4 }} name="Meta" />
                 <Line type="monotone" dataKey="realizado" stroke="#43a047" strokeWidth={3} dot={{ r: 4 }} name="Realizado" />
               </LineChart>
             </ResponsiveContainer>
-          </Card>
-        </Box>
-        {/* Tabelas */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, width: '100%' }}>
-          <Card sx={{ flex: 1, borderRadius: 3, boxShadow: 3, p: 3, mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Pedidos por Status</Typography>
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Quantidade</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pedidosStatus.map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell>{row.quantidade}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
           </Card>
         </Box>
       </Container>

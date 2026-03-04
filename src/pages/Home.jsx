@@ -30,13 +30,13 @@ const Home = () => {
       <AppBar position="static" sx={{ borderRadius: 2, mt: 2, mx: 1, background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)' }} elevation={0}>
         <Toolbar>
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: 1 }}>
-            DASHBOARD CORPORATIVO
+            DASHBOARD TRINYS / SODANÇA - TOTVS MODA
           </Typography>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 6, mb: 4 }}>
         <Typography variant="h3" align="center" gutterBottom sx={{ fontWeight: 700, color: '#22336b' }}>
-          Bem-vindo ao Dashboard
+          Bem-vindo a Dashboard
         </Typography>
         <Typography variant="h6" align="center" color="text.secondary" gutterBottom>
           Escolha um módulo para acessar:

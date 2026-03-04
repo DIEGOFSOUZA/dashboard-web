@@ -59,13 +59,16 @@ function Vendas() {
   const [loadingProdutos, setLoadingProdutos] = useState(true);
 
   useEffect(() => {
-    // Busca produtos mais vendidos do mês
+    // Busca produtos mais vendidos do mês completo
     const fetchTopProducts = async () => {
       setLoadingProdutos(true);
       try {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Último dia do mês (não hoje)
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const endDate = `${lastDayOfMonth.getFullYear()}-${String(lastDayOfMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth.getDate()).padStart(2, '0')}`;
+        
         const response = await fetch('/api/kpis/top-products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -85,26 +88,22 @@ function Vendas() {
     fetchTopProducts();
   }, []);
 
-  // Marcas mais vendidas (tabela)
-  const marcasVendidas = [
-    { marca: 'Marca X', vendas: 300 },
-    { marca: 'Marca Y', vendas: 220 },
-    { marca: 'Marca Z', vendas: 180 },
-  ];
-
   // Vendas por canal (pizza) - dinâmico
   const [canais, setCanais] = useState([]);
   const [loadingCanais, setLoadingCanais] = useState(true);
   const PIE_COLORS = ['#22336b', '#7ecbff', '#43a047', '#ff9800'];
 
   useEffect(() => {
-    // Busca vendas por canal do mês atual
+    // Busca vendas por canal do mês completo
     const fetchCanais = async () => {
       setLoadingCanais(true);
       try {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Último dia do mês (não hoje)
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const endDate = `${lastDayOfMonth.getFullYear()}-${String(lastDayOfMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth.getDate()).padStart(2, '0')}`;
+        
         const response = await fetch('/api/kpis/sales-by-channel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -129,13 +128,16 @@ function Vendas() {
   const [loadingVendedores, setLoadingVendedores] = useState(true);
 
   useEffect(() => {
-    // Busca vendas por vendedor do mês atual
+    // Busca vendas por vendedor do mês completo
     const fetchVendedores = async () => {
       setLoadingVendedores(true);
       try {
         const today = new Date();
         const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-        const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Último dia do mês (não hoje)
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const endDate = `${lastDayOfMonth.getFullYear()}-${String(lastDayOfMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth.getDate()).padStart(2, '0')}`;
+        
         const response = await fetch('/api/kpis/sales-by-representative', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -273,136 +275,145 @@ function Vendas() {
           ))}
         </Box>
 
-        {/* Linha: Gráfico de linha (faturamento) e pizza (canais) */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%' }}>
-          <Card sx={{ flex: 2, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 380 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Evolução do Faturamento</Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={faturamentoData} margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="data" />
-                <YAxis width={70} tickFormatter={v => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="valor" stroke="#22336b" strokeWidth={3} dot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 380 }}>
+        {/* Linha 2: Evolução do Faturamento - largura total */}
+        <Card sx={{ borderRadius: 3, boxShadow: 3, p: 3, mb: 4, minHeight: 320 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Evolução do Faturamento</Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={faturamentoData} margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="data" />
+              <YAxis width={80} tickFormatter={v => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} />
+              <Tooltip formatter={v => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+              <Legend />
+              <Line type="monotone" dataKey="valor" stroke="#22336b" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Linha 3: Vendas por Canal + Produtos Mais Vendidos */}
+        <Box sx={{ display: 'flex', gap: 3, mb: 4, alignItems: 'stretch', width: '100%' }}>
+          {/* Vendas por Canal - Pie sem labels inline + tabela lateral */}
+          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Vendas por Canal</Typography>
             {loadingCanais ? (
-              <Box sx={{ textAlign: 'center', mt: 8 }}>
-                <LoadingSpinner message="Carregando vendas por canal..." />
-              </Box>
+              <Box sx={{ textAlign: 'center', mt: 6 }}><LoadingSpinner message="Carregando..." /></Box>
             ) : canais.length === 0 ? (
-              <Box sx={{ textAlign: 'center', mt: 8 }}>
-                <Typography variant="body1" color="text.secondary">Nenhuma venda encontrada no período.</Typography>
-              </Box>
+              <Box sx={{ textAlign: 'center', mt: 6 }}><Typography color="text.secondary">Nenhuma venda encontrada.</Typography></Box>
             ) : (
-              <Box sx={{ width: '100%', height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={canais}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={90}
-                      label={({ name, value }) => {
-                        // Abrevia cada palavra do nome do canal para até 4 letras
-                        const abreviado = name.split(' ').map(w => w.slice(0, 4)).join(' ');
-                        return `${abreviado}: ${value}`;
-                      }}
-                      labelStyle={{ fontSize: 12 }}
-                      labelLine={false}
-                    >
-                      {canais.map((entry, idx) => (
-                        <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value, name, props) => [`${value}`, 'Pedidos']} />
-                    <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 13, marginTop: 8, maxWidth: '90%' }} />
-                  </PieChart>
-                </ResponsiveContainer>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                {/* Gráfico de pizza - sem labels inline */}
+                <Box sx={{ width: 220, height: 220, flexShrink: 0 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={canais}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={2}
+                      >
+                        {canais.map((entry, idx) => (
+                          <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value, name) => {
+                          const total = canais.reduce((sum, item) => sum + item.value, 0);
+                          const percent = ((value / total) * 100).toFixed(1);
+                          return [`${value} pedidos (${percent}%)`, name];
+                        }}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: 8, fontSize: 12 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Box>
+                {/* Tabela lateral com nomes completos */}
+                <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: 240 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, py: 0.5, fontSize: 12 }}>Canal</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, fontSize: 12 }}>Pedidos</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, fontSize: 12 }}>%</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {canais.map((row, idx) => {
+                        const total = canais.reduce((sum, item) => sum + item.value, 0);
+                        return (
+                          <TableRow key={idx} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                            <TableCell sx={{ py: 0.5, fontSize: 12 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: PIE_COLORS[idx % PIE_COLORS.length], flexShrink: 0 }} />
+                                {row.name}
+                              </Box>
+                            </TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, fontSize: 12, fontWeight: 600 }}>{row.value}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, fontSize: 12, color: 'text.secondary' }}>
+                              {((row.value / total) * 100).toFixed(1)}%
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </Box>
               </Box>
             )}
           </Card>
-        </Box>
 
-        {/* Linha: Barras (produtos) e tabela (marcas/vendedores) */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, justifyContent: 'center', alignItems: 'stretch', width: '100%' }}>
-          <Card sx={{ flex: 2, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 380 }}>
+          {/* Produtos Mais Vendidos */}
+          <Card sx={{ flex: 1.5, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Produtos Mais Vendidos</Typography>
             {loadingProdutos ? (
-              <Box sx={{ textAlign: 'center', mt: 8 }}>
-                <LoadingSpinner message="Carregando produtos mais vendidos..." />
-              </Box>
+              <Box sx={{ textAlign: 'center', mt: 6 }}><LoadingSpinner message="Carregando produtos..." /></Box>
             ) : produtosVendidos.length === 0 ? (
-              <Box sx={{ textAlign: 'center', mt: 8 }}>
-                <Typography variant="body1" color="text.secondary">Nenhum produto vendido no mês atual.</Typography>
-              </Box>
+              <Box sx={{ textAlign: 'center', mt: 6 }}><Typography color="text.secondary">Nenhum produto vendido no mês atual.</Typography></Box>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={produtosVendidos} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={produtosVendidos} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="produto" />
-                  <YAxis />
+                  <XAxis dataKey="produto" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="vendas" fill="#4caf50" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="vendas" fill="#4caf50" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </Card>
-          <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: 380 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Marcas Mais Vendidas(a fazer)</Typography>
-            <Table size="small" sx={{ mb: 2 }}>
+        </Box>
+
+        {/* Linha 4: Vendas por Vendedor - largura total */}
+        <Card sx={{ borderRadius: 3, boxShadow: 3, p: 3, mb: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Vendas por Vendedor</Typography>
+          {loadingVendedores ? (
+            <Box sx={{ textAlign: 'center', mt: 4 }}><LoadingSpinner message="Carregando vendedores..." /></Box>
+          ) : vendedores.length === 0 ? (
+            <Box sx={{ textAlign: 'center', mt: 4 }}><Typography color="text.secondary">Nenhuma venda encontrada no período.</Typography></Box>
+          ) : (
+            <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell>Marca</TableCell>
-                  <TableCell>Vendas</TableCell>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Vendedor</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Pedidos</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {marcasVendidas.map((row, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{row.marca}</TableCell>
-                    <TableCell>{row.vendas}</TableCell>
+                {vendedores.map((row, idx) => (
+                  <TableRow key={idx} sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
+                    <TableCell sx={{ color: 'text.secondary', width: 40 }}>{idx + 1}</TableCell>
+                    <TableCell>{row.vendedor}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>{row.vendas}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Vendas por Vendedor</Typography>
-            {loadingVendedores ? (
-              <Box sx={{ textAlign: 'center', mt: 4 }}>
-                <LoadingSpinner message="Carregando vendas por vendedor..." />
-              </Box>
-            ) : vendedores.length === 0 ? (
-              <Box sx={{ textAlign: 'center', mt: 4 }}>
-                <Typography variant="body1" color="text.secondary">Nenhuma venda encontrada no período.</Typography>
-              </Box>
-            ) : (
-              <Box sx={{ maxHeight: 240, overflowY: 'auto' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Vendedor</TableCell>
-                      <TableCell>Vendas</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {vendedores.map((row, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{row.vendedor}</TableCell>
-                        <TableCell>{row.vendas}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-          </Card>
-        </Box>
+          )}
+        </Card>
       </Container>
     </Box>
   );

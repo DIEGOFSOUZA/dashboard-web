@@ -2,6 +2,9 @@
 
 Dashboard de vendas desenvolvido em React com Material-UI e Recharts.
 
+## Documentação para usuários
+- Formação dos números por página: [DOCUMENTACAO_PAGINAS_DASHBOARD.md](./DOCUMENTACAO_PAGINAS_DASHBOARD.md)
+
 ## Funcionalidades
 - KPIs de vendas
 - Gráficos de barras e pizza
