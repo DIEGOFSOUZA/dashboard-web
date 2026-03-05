@@ -38,6 +38,11 @@ function Financeiro() {
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // KPIs em tempo real (buscados ao vivo)
+  const [kpiHoje, setKpiHoje] = useState({ a_pagar_hoje: null, recebidos_hoje: null });
+  const [loadingHoje, setLoadingHoje] = useState(true);
+  const [errorHoje, setErrorHoje] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     const loadCacheData = async () => {
@@ -85,6 +90,29 @@ function Financeiro() {
     };
 
     loadCacheData();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Busca em tempo real: KPIs do dia corrente
+  useEffect(() => {
+    let isMounted = true;
+    const loadHoje = async () => {
+      try {
+        const resp = await fetch('/api/financeiro/hoje');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        if (isMounted) {
+          setKpiHoje({ a_pagar_hoje: data.a_pagar_hoje ?? 0, recebidos_hoje: data.recebidos_hoje ?? 0 });
+          setErrorHoje(false);
+        }
+      } catch (err) {
+        console.error('[Financeiro] ❌ Erro ao buscar KPIs do dia:', err);
+        if (isMounted) setErrorHoje(true);
+      } finally {
+        if (isMounted) setLoadingHoje(false);
+      }
+    };
+    loadHoje();
     return () => { isMounted = false; };
   }, []);
 
@@ -190,6 +218,77 @@ function Financeiro() {
               </Card>
             </MuiTooltip>
           ))}
+        </Box>
+
+        {/* Row 1.5: KPIs Ao Vivo (hoje) */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{
+            width: 10, height: 10, borderRadius: '50%', background: '#e53935',
+            animation: 'pulse 1.4s ease-in-out infinite',
+            '@keyframes pulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.3 } },
+          }} />
+          <Typography variant="caption" sx={{ fontWeight: 700, color: '#e53935', letterSpacing: 1, textTransform: 'uppercase' }}>
+            Hoje — Tempo Real
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gap: 2, mb: 3, gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(2, 1fr)' } }}>
+          {/* A Pagar Hoje */}
+          <MuiTooltip title="Duplicatas com vencimento hoje ainda não pagas — atualizado agora" arrow placement="top">
+            <Card sx={{
+              background: 'linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%)',
+              color: '#fff',
+              borderRadius: 2,
+              boxShadow: 3,
+              p: 2.5,
+              textAlign: 'center',
+              cursor: 'default',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'scale(1.03)', boxShadow: 6 },
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ opacity: 0.85, fontWeight: 500 }}>A Pagar Hoje</Typography>
+                <Chip label="AO VIVO" size="small" sx={{ fontSize: 9, fontWeight: 700, height: 16, background: 'rgba(255,255,255,0.25)', color: '#fff', letterSpacing: 0.5 }} />
+              </Box>
+              {loadingHoje ? (
+                <CircularProgress size={28} thickness={4} sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }} />
+              ) : errorHoje ? (
+                <Typography variant="h6" sx={{ fontWeight: 600, opacity: 0.7 }}>Erro</Typography>
+              ) : (
+                <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.5px' }}>
+                  {formatCurrency(kpiHoje.a_pagar_hoje)}
+                </Typography>
+              )}
+            </Card>
+          </MuiTooltip>
+
+          {/* Recebidos Hoje */}
+          <MuiTooltip title="Títulos a receber baixados/pagos hoje — atualizado agora" arrow placement="top">
+            <Card sx={{
+              background: 'linear-gradient(135deg, #006064 0%, #00838f 100%)',
+              color: '#fff',
+              borderRadius: 2,
+              boxShadow: 3,
+              p: 2.5,
+              textAlign: 'center',
+              cursor: 'default',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'scale(1.03)', boxShadow: 6 },
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ opacity: 0.85, fontWeight: 500 }}>Recebidos Hoje</Typography>
+                <Chip label="AO VIVO" size="small" sx={{ fontSize: 9, fontWeight: 700, height: 16, background: 'rgba(255,255,255,0.25)', color: '#fff', letterSpacing: 0.5 }} />
+              </Box>
+              {loadingHoje ? (
+                <CircularProgress size={28} thickness={4} sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }} />
+              ) : errorHoje ? (
+                <Typography variant="h6" sx={{ fontWeight: 600, opacity: 0.7 }}>Erro</Typography>
+              ) : (
+                <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.5px' }}>
+                  {formatCurrency(kpiHoje.recebidos_hoje)}
+                </Typography>
+              )}
+            </Card>
+          </MuiTooltip>
         </Box>
 
         {/* Row 2: 3 Metric Cards */}
