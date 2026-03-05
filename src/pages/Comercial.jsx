@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, CircularProgress
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import PaidIcon from '@mui/icons-material/Paid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -54,6 +55,7 @@ function ComercialDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const navigate = useNavigate();
 
@@ -83,6 +85,28 @@ function ComercialDashboard() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const resp = await fetch('/api/cache/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'comercial' }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    } catch (err) {
+      console.error('[Comercial] Erro ao atualizar cache:', err);
+    } finally {
+      setRefreshing(false);
+      loadDashboard();
+      // Atualiza timestamp
+      fetch('/api/cache/comercial_dashboard.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(j => j && setCacheTimestamp(j.timestamp || null))
+        .catch(() => {});
+    }
+  };
 
   const kpis = useMemo(() => {
     const apiKpis = dashboardData.kpis || {};
@@ -186,6 +210,9 @@ function ComercialDashboard() {
               Atualizado: {fmtTimestamp(cacheTimestamp)}
             </Typography>
           )}
+          <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
+            {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
@@ -317,6 +344,15 @@ function ComercialDashboard() {
           </Card>
         </Box>
       </Container>
+      {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados comerciais</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 90 segundos...</Typography>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 }

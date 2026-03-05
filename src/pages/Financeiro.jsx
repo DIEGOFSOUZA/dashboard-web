@@ -4,6 +4,7 @@ import {
   TableBody, TableContainer, Tooltip as MuiTooltip, CircularProgress, Chip
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -37,6 +38,8 @@ function Financeiro() {
   const [titulosVencidosPagar, setTitulosVencidosPagar] = useState([]);
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // KPIs em tempo real (buscados ao vivo)
   const [kpiHoje, setKpiHoje] = useState({ a_pagar_hoje: null, recebidos_hoje: null });
@@ -91,7 +94,7 @@ function Financeiro() {
 
     loadCacheData();
     return () => { isMounted = false; };
-  }, []);
+  }, [refreshKey]);
 
   // Busca em tempo real: KPIs do dia corrente
   useEffect(() => {
@@ -114,7 +117,24 @@ function Financeiro() {
     };
     loadHoje();
     return () => { isMounted = false; };
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const resp = await fetch('/api/cache/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'financeiro' }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    } catch (err) {
+      console.error('[Financeiro] Erro ao atualizar cache:', err);
+    } finally {
+      setRefreshing(false);
+      setRefreshKey(k => k + 1);
+    }
+  };
 
   const mainKpis = [
     {
@@ -191,6 +211,15 @@ function Financeiro() {
               Atualizado: {formatDate(cacheTimestamp)} {cacheTimestamp ? cacheTimestamp.split('T')[1]?.slice(0, 5) : ''}
             </Typography>
           )}
+          <MuiTooltip title="Atualizar dados" arrow>
+            <span>
+              <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" sx={{ ml: 0.5 }}>
+                {refreshing
+                  ? <CircularProgress size={20} color="inherit" />
+                  : <RefreshIcon fontSize="small" />}
+              </IconButton>
+            </span>
+          </MuiTooltip>
         </Toolbar>
       </AppBar>
 
@@ -517,6 +546,17 @@ function Financeiro() {
         </Box>
 
       </Container>
+
+      {/* Overlay de refresh */}
+      {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados financeiros</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 60 segundos...</Typography>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 }

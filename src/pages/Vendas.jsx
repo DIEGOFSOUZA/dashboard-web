@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, Skeleton
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, Skeleton, CircularProgress
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import PaidIcon from '@mui/icons-material/Paid';
@@ -23,6 +24,8 @@ function Vendas() {
   ]);
 
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Evolução do faturamento (linha) - dinâmico
   const [faturamentoData, setFaturamentoData] = useState([]);
@@ -34,8 +37,7 @@ function Vendas() {
 
   useEffect(() => {
     // Busca evolução do faturamento dos últimos 6 meses
-    const fetchFaturamento = async () => {
-      setLoadingFaturamento(true);
+    const fetchFaturamento = async () => {      setLoadingFaturamento(true);
       try {
         const response = await fetch('/api/kpis/sales-evolution');
         const data = await response.json();
@@ -54,7 +56,7 @@ function Vendas() {
       setLoadingFaturamento(false);
     };
     fetchFaturamento();
-  }, []);
+  }, [refreshKey]);
 
   // Produtos mais vendidos (dinâmico)
   const [produtosVendidos, setProdutosVendidos] = useState([]);
@@ -88,7 +90,7 @@ function Vendas() {
       setLoadingProdutos(false);
     };
     fetchTopProducts();
-  }, []);
+  }, [refreshKey]);
 
   // Vendas por canal (pizza) - dinâmico
   const [canais, setCanais] = useState([]);
@@ -123,7 +125,7 @@ function Vendas() {
       setLoadingCanais(false);
     };
     fetchCanais();
-  }, []);
+  }, [refreshKey]);
 
   // Vendas por vendedor (tabela) - dinâmico
   const [vendedores, setVendedores] = useState([]);
@@ -157,7 +159,7 @@ function Vendas() {
       setLoadingVendedores(false);
     };
     fetchVendedores();
-  }, []);
+  }, [refreshKey]);
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -220,7 +222,24 @@ function Vendas() {
     };
     
     loadCacheKpis();
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const resp = await fetch('/api/cache/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'vendas' }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    } catch (err) {
+      console.error('[Vendas] Erro ao atualizar cache:', err);
+    } finally {
+      setRefreshing(false);
+      setRefreshKey(k => k + 1);
+    }
+  };
 
   // Debug: mostrar os valores dos 6 meses no console
   console.log('Evolução do faturamento (6 meses):', faturamentoData);
@@ -244,6 +263,9 @@ function Vendas() {
               })()}
             </Typography>
           )}
+          <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
+            {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
           {/* Ícones removidos conforme solicitado */}
         </Toolbar>
       </AppBar>
@@ -427,6 +449,15 @@ function Vendas() {
           )}
         </Card>
       </Container>
+      {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados de vendas</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 30 segundos...</Typography>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 }

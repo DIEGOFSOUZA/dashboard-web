@@ -1,6 +1,7 @@
 import { Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, CircularProgress, Chip, Alert } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import HomeIcon from '@mui/icons-material/Home';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -24,6 +25,7 @@ function Clientes() {
   const [loadingLista, setLoadingLista] = useState(true);
   const [error, setError] = useState(null);
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Buscar dados da API
   const fetchData = async () => {
@@ -78,10 +80,28 @@ function Clientes() {
   };
 
   // Função para tentar recarregar dados em caso de erro
-  const handleRefresh = () => {
+  const handleRetry = () => {
     setError(null);
     fetchData();
     fetchListaClientes();
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const resp = await fetch('/api/cache/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'clientes' }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    } catch (err) {
+      console.error('[Clientes] Erro ao atualizar cache:', err);
+    } finally {
+      setRefreshing(false);
+      fetchData();
+      fetchListaClientes();
+    }
   };
 
   // Carregar dados ao montar o componente
@@ -166,6 +186,9 @@ function Clientes() {
               Atualizado: {fmtTimestamp(cacheTimestamp)}
             </Typography>
           )}
+          <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
+            {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -175,7 +198,7 @@ function Clientes() {
           <strong>Erro ao carregar dados:</strong> {error}
           <Box sx={{ mt: 1 }}>
             <button 
-              onClick={handleRefresh}
+              onClick={handleRetry}
               style={{ 
                 padding: '4px 12px',
                 fontSize: '0.875rem',
@@ -310,6 +333,15 @@ function Clientes() {
           )}
         </Card>
       </Container>
+      {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados de clientes</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 90 segundos...</Typography>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 }

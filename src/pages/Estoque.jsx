@@ -1,12 +1,13 @@
 import {
   Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, Chip
+  TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, Chip, CircularProgress
 } from '@mui/material';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip,
   ResponsiveContainer, Legend, Cell
 } from 'recharts';
 import HomeIcon from '@mui/icons-material/Home';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -48,8 +49,26 @@ function Estoque() {
   const [topProdutos, setTopProdutos] = useState([]);
   const [alertas, setAlertas] = useState([]);
   const [updatedAt, setUpdatedAt] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const resp = await fetch('/api/cache/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'estoque' }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    } catch (err) {
+      console.error('[Estoque] Erro ao atualizar cache:', err);
+    } finally {
+      setRefreshing(false);
+      fetchData();
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -131,6 +150,9 @@ function Estoque() {
               Atualizado: {updatedAt}
             </Typography>
           )}
+          <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
+            {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -306,6 +328,15 @@ function Estoque() {
         </Card>
 
       </Container>
+      {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados de estoque</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 60 segundos...</Typography>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 }
