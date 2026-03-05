@@ -22,6 +22,8 @@ function Vendas() {
     { label: 'Pedidos Emitidos', value: '...', gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)', isLoading: true },
   ]);
 
+  const [cacheTimestamp, setCacheTimestamp] = useState(null);
+
   // Evolução do faturamento (linha) - dinâmico
   const [faturamentoData, setFaturamentoData] = useState([]);
 
@@ -170,6 +172,7 @@ function Vendas() {
         });
         const data = await response.json();
         if (response.ok) {
+          setCacheTimestamp(new Date().toISOString());
           // Mostrar cache imediatamente (apenas dados que vêm do cache)
           setKpis(prev => [
             { ...prev[0], value: `R$ ${Number(data.total_vendido_mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false },
@@ -232,6 +235,15 @@ function Vendas() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Dashboard de Vendas
           </Typography>
+          {cacheTimestamp && (
+            <Typography variant="caption" sx={{ opacity: 0.75, mr: 1 }}>
+              Atualizado: {(() => {
+                const [dp = '', tp = ''] = cacheTimestamp.split('T');
+                const [y, m, d] = dp.split('-');
+                return `${d}/${m}/${y} ${tp.slice(0, 5)}`;
+              })()}
+            </Typography>
+          )}
           {/* Ícones removidos conforme solicitado */}
         </Toolbar>
       </AppBar>

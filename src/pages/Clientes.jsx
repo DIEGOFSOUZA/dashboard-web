@@ -8,6 +8,13 @@ import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import { useState, useEffect } from 'react';
 
+function fmtTimestamp(ts) {
+  if (!ts) return '';
+  const [datePart = '', timePart = ''] = ts.split('T');
+  const [y, m, d] = datePart.split('-');
+  return `${d}/${m}/${y} ${timePart.slice(0, 5)}`;
+}
+
 function Clientes() {
   const navigate = useNavigate();
   
@@ -16,6 +23,7 @@ function Clientes() {
   const [loading, setLoading] = useState(true);
   const [loadingLista, setLoadingLista] = useState(true);
   const [error, setError] = useState(null);
+  const [cacheTimestamp, setCacheTimestamp] = useState(null);
 
   // Buscar dados da API
   const fetchData = async () => {
@@ -33,6 +41,15 @@ function Clientes() {
       });
       setLoadingLista(true);
       setError(null);
+
+      // Buscar timestamp do cache
+      try {
+        const cacheResp = await fetch('/api/cache/clientes_dashboard.json');
+        if (cacheResp.ok) {
+          const cacheJson = await cacheResp.json();
+          setCacheTimestamp(cacheJson.timestamp || null);
+        }
+      } catch (_) {}
     } catch (err) {
       setError(err.message || 'Erro ao buscar dados');
       console.error('Erro ao buscar clientes:', err);
@@ -144,6 +161,11 @@ function Clientes() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             DASHBOARD DE CLIENTES
           </Typography>
+          {cacheTimestamp && (
+            <Typography variant="caption" sx={{ opacity: 0.75, mr: 1 }}>
+              Atualizado: {fmtTimestamp(cacheTimestamp)}
+            </Typography>
+          )}
         </Toolbar>
       </AppBar>
 

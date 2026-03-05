@@ -30,6 +30,13 @@ function truncateLabel(value, maxLength = 18) {
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
+function fmtTimestamp(ts) {
+  if (!ts) return '';
+  const [datePart = '', timePart = ''] = ts.split('T');
+  const [y, m, d] = datePart.split('-');
+  return `${d}/${m}/${y} ${timePart.slice(0, 5)}`;
+}
+
 function ComercialDashboard() {
   const [dashboardData, setDashboardData] = useState({
     kpis: {
@@ -46,6 +53,7 @@ function ComercialDashboard() {
     pedidos_status: [],
   });
   const [loading, setLoading] = useState(true);
+  const [cacheTimestamp, setCacheTimestamp] = useState(null);
 
   const navigate = useNavigate();
 
@@ -57,6 +65,14 @@ function ComercialDashboard() {
       if (response.ok) {
         setDashboardData(data);
       }
+      // Buscar timestamp do cache
+      try {
+        const cacheResp = await fetch('/api/cache/comercial_dashboard.json');
+        if (cacheResp.ok) {
+          const cacheJson = await cacheResp.json();
+          setCacheTimestamp(cacheJson.timestamp || null);
+        }
+      } catch (_) {}
     } catch (error) {
       console.error('Erro ao carregar dashboard comercial:', error);
     } finally {
@@ -165,6 +181,11 @@ function ComercialDashboard() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             DASHBOARD COMERCIAL
           </Typography>
+          {cacheTimestamp && (
+            <Typography variant="caption" sx={{ opacity: 0.75, mr: 1 }}>
+              Atualizado: {fmtTimestamp(cacheTimestamp)}
+            </Typography>
+          )}
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
