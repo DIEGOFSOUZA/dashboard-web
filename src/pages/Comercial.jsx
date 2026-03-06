@@ -363,11 +363,11 @@ function ComercialDashboard() {
             <Divider />
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Pedidos em Aberto" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
-                secondary="Contagem de pedidos com status \"Em andamento\" ou \"Parcialmente atendido\" no mês. São pedidos que ainda não foram totalmente faturados." />
+                secondary="Contagem de pedidos com status &quot;Em andamento&quot; ou &quot;Parcialmente atendido&quot; no mês. São pedidos que ainda não foram totalmente faturados." />
             </ListItem>
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Pedidos Bloqueados" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
-                secondary="Pedidos com status \"Bloqueado\" no ERP. Geralmente aguardam liberação do financeiro (limite de crédito) ou aprovação comercial." />
+                secondary="Pedidos com status &quot;Bloqueado&quot; no ERP. Geralmente aguardam liberação do financeiro (limite de crédito) ou aprovação comercial." />
             </ListItem>
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Previsão de Faturamento" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
@@ -400,6 +400,10 @@ function ComercialDashboard() {
         </DialogActions>
       </Dialog>
       {refreshing && (
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
+            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
+            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados comerciais</Typography>
             <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 90 segundos...</Typography>
           </Card>
         </Box>

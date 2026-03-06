@@ -500,7 +500,7 @@ function Vendas() {
             </ListItem>
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Vendas por Canal" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
-                secondary="Distribuição dos pedidos por origem: VTEX (e-commerce), Força de Vendas (Trovata), Digitado, etc. Classificado pelo campo \"Origem do Pedido\" do ERP." />
+                secondary="Distribuição dos pedidos por origem: VTEX (e-commerce), Força de Vendas (Trovata), Digitado, etc. Classificado pelo campo &quot;Origem do Pedido&quot; do ERP." />
             </ListItem>
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Produtos Mais Vendidos" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
