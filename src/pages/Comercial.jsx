@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, CircularProgress
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Divider, List, ListItem, ListItemText
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import PaidIcon from '@mui/icons-material/Paid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -56,6 +58,7 @@ function ComercialDashboard() {
   const [loading, setLoading] = useState(true);
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -213,6 +216,9 @@ function ComercialDashboard() {
           <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
             {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
           </IconButton>
+          <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
+            <InfoOutlinedIcon fontSize="small" />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} sx={{ px: 2, mt: 4 }}>
@@ -344,11 +350,56 @@ function ComercialDashboard() {
           </Card>
         </Box>
       </Container>
+      {/* Dialog: Como os dados são calculados */}
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
+          Como os dados são calculados
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <List disablePadding>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>KPIs Principais</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Pedidos em Aberto" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Contagem de pedidos com status \"Em andamento\" ou \"Parcialmente atendido\" no mês. São pedidos que ainda não foram totalmente faturados." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Pedidos Bloqueados" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Pedidos com status \"Bloqueado\" no ERP. Geralmente aguardam liberação do financeiro (limite de crédito) ou aprovação comercial." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Previsão de Faturamento" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma do valor líquido de todos os pedidos abertos (Em andamento e Parcialmente atendido). Representa o que ainda pode ser faturado no mês." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Previsão vs Realizado" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Comparativo entre a meta de faturamento do mês e o valor efetivamente realizado até o momento." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Gráficos</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Funil de Vendas" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Distribuição dos pedidos por estágio: Em andamento, Parcialmente atendido, Atendido, Bloqueado e Cancelado." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Pedidos por Vendedor" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="TOP 10 representantes com maior número de pedidos no mês, ordenados de forma decrescente." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
+              <ListItemText primary="Meta vs Realizado" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Evolução mensal comparando a meta de faturamento cadastrada no sistema com o valor efetivamente faturado. Permite visualizar tendência ao longo dos meses." />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 2 }}>
+          <Button onClick={() => setInfoOpen(false)} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       {refreshing && (
-        <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
-            <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
-            <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados comerciais</Typography>
             <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 90 segundos...</Typography>
           </Card>
         </Box>

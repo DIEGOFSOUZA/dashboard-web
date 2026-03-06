@@ -1,10 +1,12 @@
 ﻿import React, { useEffect, useState } from 'react';
 import {
   Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell,
-  TableBody, TableContainer, Tooltip as MuiTooltip, CircularProgress, Chip
+  TableBody, TableContainer, Tooltip as MuiTooltip, CircularProgress, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Divider, List, ListItem, ListItemText
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -39,6 +41,7 @@ function Financeiro() {
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // KPIs em tempo real (buscados ao vivo)
@@ -220,6 +223,9 @@ function Financeiro() {
               </IconButton>
             </span>
           </MuiTooltip>
+          <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
+            <InfoOutlinedIcon fontSize="small" />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -548,6 +554,71 @@ function Financeiro() {
       </Container>
 
       {/* Overlay de refresh */}
+      {/* Dialog: Como os dados são calculados */}
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
+          Como os dados são calculados
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <List disablePadding>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Contas a Receber</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="A Receber — Total" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma de todos os títulos em aberto com clientes, independente da data de vencimento. Inclui vencidos e a vencer." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Vencido a Receber" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Títulos de clientes com data de vencimento anterior a hoje que ainda não foram recebidos. Indica o valor em atraso." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Recebido Hoje (tempo real)" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma dos títulos de clientes com vencimento na data de hoje. Consultado diretamente no ERP toda vez que a página é aberta." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Contas a Pagar</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="A Pagar — Total" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma de todos os títulos em aberto com fornecedores, independente do vencimento. Excluí títulos cancelados ou já quitados." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Vencido a Pagar" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Títulos de fornecedores com data de vencimento anterior a hoje que ainda não foram pagos. Indica o valor em atraso." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="A Pagar Hoje (tempo real)" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma dos títulos de fornecedores com vencimento na data de hoje. Consultado diretamente no ERP toda vez que a página é aberta." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Outros Indicadores</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Inadimplência (%)" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Percentual dos títulos vencidos a receber sobre o total a receber. Quanto maior, mais clientes estão atrasados." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="PMR — Prazo Médio de Recebimento" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Média de dias que a empresa leva para receber após emitir o faturamento. Calculado sobre os títulos recebidos no mês." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="PMP — Prazo Médio de Pagamento" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Média de dias que a empresa leva para pagar seus fornecedores após o recebimento da mercadoria ou emissão da nota." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
+              <ListItemText primary="Tabelas de Títulos Vencidos" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Listagem detalhada dos títulos em atraso, separados entre a receber (clientes) e a pagar (fornecedores), com valor, vencimento e dias de atraso." />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 2 }}>
+          <Button onClick={() => setInfoOpen(false)} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       {refreshing && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>

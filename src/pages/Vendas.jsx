@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, Skeleton, CircularProgress
+  Box, AppBar, Toolbar, IconButton, Typography, Container, Card, Table, TableHead, TableRow, TableCell, TableBody, Skeleton, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Divider, List, ListItem, ListItemText
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import PaidIcon from '@mui/icons-material/Paid';
@@ -25,6 +27,7 @@ function Vendas() {
 
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Evolução do faturamento (linha) - dinâmico
@@ -270,6 +273,9 @@ function Vendas() {
           <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
             {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
           </IconButton>
+          <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
+            <InfoOutlinedIcon fontSize="small" />
+          </IconButton>
           {/* Ícones removidos conforme solicitado */}
         </Toolbar>
       </AppBar>
@@ -453,6 +459,63 @@ function Vendas() {
           )}
         </Card>
       </Container>
+      {/* Dialog: Como os dados são calculados */}
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
+          Como os dados são calculados
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <List disablePadding>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>KPIs do Período</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total Vendido no Mês" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma do valor líquido de todos os pedidos emitidos do dia 1º até ontem. Atualizado uma vez por dia pelo agendador automático (madrugada)." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total Vendido na Semana" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Soma dos pedidos emitidos na semana corrente (domingo a sábado). Calculado sobre os dados em cache." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total Vendido no Dia (tempo real)" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Valor dos pedidos emitidos hoje. Consultado diretamente no ERP toda vez que a página é aberta, sem depender do cache." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Ticket Médio" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Total Vendido no Mês dividido pelo número de pedidos emitidos no mesmo período. Mostra o valor médio por pedido." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Pedidos Emitidos (tempo real)" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Contagem de pedidos únicos emitidos hoje. Consultado diretamente no ERP ao abrir a página." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Gráficos e Tabela</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Evolução do Faturamento" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Histórico dos últimos 6 meses fechados. Atualizado uma vez por dia pelo agendador. Não é recalculado pelo botão de atualizar." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Vendas por Canal" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Distribuição dos pedidos por origem: VTEX (e-commerce), Força de Vendas (Trovata), Digitado, etc. Classificado pelo campo \"Origem do Pedido\" do ERP." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Produtos Mais Vendidos" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="TOP 10 referências por quantidade vendida no mês. Calculado a partir dos itens dentro de cada pedido (busca mais detalhada)." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
+              <ListItemText primary="Vendas por Vendedor" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="TOP 10 representantes com maior número de pedidos no mês. Baseado no campo representativeName do ERP." />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 2 }}>
+          <Button onClick={() => setInfoOpen(false)} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       {refreshing && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>

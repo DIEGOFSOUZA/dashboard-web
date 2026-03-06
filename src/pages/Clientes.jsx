@@ -1,4 +1,5 @@
-import { Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, CircularProgress, Chip, Alert } from '@mui/material';
+import { Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, CircularProgress, Chip, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button, Divider, List, ListItem, ListItemText } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import HomeIcon from '@mui/icons-material/Home';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -26,6 +27,7 @@ function Clientes() {
   const [error, setError] = useState(null);
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   // Buscar dados da API
   const fetchData = async () => {
@@ -189,6 +191,9 @@ function Clientes() {
           <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
             {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
           </IconButton>
+          <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
+            <InfoOutlinedIcon fontSize="small" />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -333,6 +338,51 @@ function Clientes() {
           )}
         </Card>
       </Container>
+      {/* Dialog: Como os dados são calculados */}
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
+          Como os dados são calculados
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <List disablePadding>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>KPIs Principais</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total de Clientes" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Número total de clientes cadastrados e ativos no ERP Totvs Moda." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Novos Clientes" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Clientes com registro de primeira compra nos últimos 90 dias. Indica a entrada de novos compradores na carteira." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Clientes Inadimplentes" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Clientes que possuem pelo menos um título de cobrança vencido e ainda não pago no sistema financeiro." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Gráficos e Tabela</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Novos × Inadimplentes" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Comparativo mensal mostrando a evolução de clientes novos e clientes que entraram em inadimplência em cada mês." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Curva ABC" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Classifica os clientes pelo volume de compras: A (top 20%, maior faturamento), B (30% seguintes), C (50% restantes). Ajuda a priorizar a carteira." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
+              <ListItemText primary="Lista de Clientes" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Relação completa dos clientes com valor total comprado no período e status de adimplência. Atualizada em tempo real a cada acesso." />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 2 }}>
+          <Button onClick={() => setInfoOpen(false)} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       {refreshing && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>

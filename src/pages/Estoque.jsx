@@ -1,6 +1,7 @@
 import {
   Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, Chip, CircularProgress
+  TableRow, Paper, Box, AppBar, Toolbar, IconButton, Container, Chip, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Divider, List, ListItem, ListItemText
 } from '@mui/material';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip,
@@ -8,6 +9,7 @@ import {
 } from 'recharts';
 import HomeIcon from '@mui/icons-material/Home';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -50,6 +52,7 @@ function Estoque() {
   const [alertas, setAlertas] = useState([]);
   const [updatedAt, setUpdatedAt] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -152,6 +155,9 @@ function Estoque() {
           )}
           <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
             {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
+          <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
+            <InfoOutlinedIcon fontSize="small" />
           </IconButton>
         </Toolbar>
       </AppBar>
@@ -328,6 +334,47 @@ function Estoque() {
         </Card>
 
       </Container>
+      {/* Dialog: Como os dados são calculados */}
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
+          Como os dados são calculados
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <List disablePadding>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>KPIs Principais</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total de Peças" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Quantidade total de unidades disponíveis (saldo físico) em todos os depósitos cadastrados no ERP." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Total de SKUs" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Número de referências ou grade de produto distintas que possuem pelo menos uma unidade em estoque." />
+            </ListItem>
+            <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Visualizações</Typography>
+            </ListItem>
+            <Divider />
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Estoque por Depósito" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Distribuição da quantidade de peças entre os depósitos cadastrados (ex.: depósito central, filial, terceiros). Permite identificar onde o estoque está concentrado." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Top Produtos" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Os 10 produtos com maior quantidade em estoque no momento. Útil para identificar itens com excesso de estoque." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
+              <ListItemText primary="Alertas de Estoque" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Produtos com saldo zerado ou abaixo do estoque mínimo definido no cadastro do ERP. Exige reposiciónamento." />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 2 }}>
+          <Button onClick={() => setInfoOpen(false)} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       {refreshing && (
         <Box sx={{ position: 'fixed', inset: 0, zIndex: 1400, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
