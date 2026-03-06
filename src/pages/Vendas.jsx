@@ -233,6 +233,9 @@ function Vendas() {
         body: JSON.stringify({ page: 'vendas' }),
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      // Atualiza o label imediatamente ao término do refresh,
+      // sem aguardar o reload assíncrono dos dados (que tem chamada extra à API)
+      setCacheTimestamp(new Date().toISOString());
     } catch (err) {
       console.error('[Vendas] Erro ao atualizar cache:', err);
     } finally {
