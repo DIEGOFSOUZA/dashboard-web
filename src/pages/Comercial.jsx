@@ -329,12 +329,12 @@ function ComercialDashboard() {
 
           {/* Coluna direita: Previsão vs Realizado */}
           <Card sx={{ flex: 1, minWidth: 0, borderRadius: 3, boxShadow: 3, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Previsão vs Realizado</Typography>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Faturamento vs Realizado</Typography>
             <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
-              Conversão da previsão: {metaResumo.atingimento.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+              Atingimento da meta: {metaResumo.atingimento.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
             </Typography>
             <Typography variant="body2" sx={{ mb: 2, color: metaResumo.diferenca >= 0 ? 'success.main' : 'error.main', fontWeight: 600 }}>
-              Gap da previsão: {metaResumo.diferenca >= 0 ? '+' : ''}{formatCurrency(metaResumo.diferenca)}
+              Gap da meta: {metaResumo.diferenca >= 0 ? '+' : ''}{formatCurrency(metaResumo.diferenca)}
             </Typography>
             <ResponsiveContainer width="100%" height={230}>
               <LineChart data={metaRealizado} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
@@ -390,8 +390,8 @@ function ComercialDashboard() {
                 secondary="TOP 10 representantes com maior número de pedidos no mês, ordenados de forma decrescente." />
             </ListItem>
             <ListItem alignItems="flex-start" sx={{ px: 2, pb: 2 }}>
-              <ListItemText primary="Meta vs Realizado" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
-                secondary="Evolução mensal comparando a meta de faturamento cadastrada no sistema com o valor efetivamente faturado. Permite visualizar tendência ao longo dos meses." />
+              <ListItemText primary="Faturamento vs Realizado" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Evolução mensal comparando a meta de faturamento com o valor efetivamente realizado. Atingimento da meta = realizado ÷ meta × 100. Gap da meta = realizado − meta (positivo = acima da meta)." />
             </ListItem>
           </List>
         </DialogContent>
