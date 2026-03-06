@@ -174,7 +174,8 @@ function Vendas() {
         });
         const data = await response.json();
         if (response.ok) {
-          setCacheTimestamp(new Date().toISOString());
+          // Usa updated_at gravado no cache; fallback para hora atual
+          setCacheTimestamp(data.updated_at || new Date().toISOString());
           // Mostrar cache imediatamente (apenas dados que vêm do cache)
           setKpis(prev => [
             { ...prev[0], value: `R$ ${Number(data.total_vendido_mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, isLoading: false },
