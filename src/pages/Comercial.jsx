@@ -59,6 +59,7 @@ function ComercialDashboard() {
   const [cacheTimestamp, setCacheTimestamp] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -213,7 +214,7 @@ function ComercialDashboard() {
               Atualizado: {fmtTimestamp(cacheTimestamp)}
             </Typography>
           )}
-          <IconButton color="inherit" onClick={handleRefresh} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
+          <IconButton color="inherit" onClick={() => setConfirmOpen(true)} disabled={refreshing} size="small" title="Atualizar dados" sx={{ ml: 0.5 }}>
             {refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon fontSize="small" />}
           </IconButton>
           <IconButton color="inherit" onClick={() => setInfoOpen(true)} size="small" title="Como os dados são calculados" sx={{ ml: 0.5 }}>
@@ -350,6 +351,19 @@ function ComercialDashboard() {
           </Card>
         </Box>
       </Container>
+      {/* Dialog: Confirmação de atualização */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Atualizar cache</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Deseja atualizar os dados desta página? O processo leva aproximadamente <strong>16 minutos</strong>.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, pb: 2 }}>
+          <Button onClick={() => setConfirmOpen(false)} variant="outlined" sx={{ color: '#1e466e', borderColor: '#1e466e' }}>Cancelar</Button>
+          <Button onClick={() => { setConfirmOpen(false); handleRefresh(); }} variant="contained" sx={{ background: '#1e466e', '&:hover': { background: '#0f2239' } }}>Atualizar</Button>
+        </DialogActions>
+      </Dialog>
       {/* Dialog: Como os dados são calculados */}
       <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} maxWidth="sm" fullWidth scroll="paper">
         <DialogTitle sx={{ background: 'linear-gradient(90deg, #0f2239 0%, #1e466e 100%)', color: '#fff', fontWeight: 700 }}>
@@ -404,7 +418,7 @@ function ComercialDashboard() {
           <Card sx={{ p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320, textAlign: 'center' }}>
             <CircularProgress size={52} thickness={4} sx={{ color: '#1e466e' }} />
             <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>Atualizando dados comerciais</Typography>
-            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 90 segundos...</Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>Isso pode levar até 16 minutos...</Typography>
           </Card>
         </Box>
       )}
