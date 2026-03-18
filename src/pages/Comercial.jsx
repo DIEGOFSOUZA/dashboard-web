@@ -11,6 +11,7 @@ import PaidIcon from '@mui/icons-material/Paid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CreditCardOffIcon from '@mui/icons-material/CreditCardOff';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, FunnelChart, Funnel, LabelList, CartesianGrid, LineChart, Line } from 'recharts';
 
 function formatCurrency(value) {
@@ -45,6 +46,8 @@ function ComercialDashboard() {
     kpis: {
       pedidos_em_aberto: 0,
       pedidos_bloqueados: 0,
+      pedidos_atrasados: 0,
+      percentual_atrasados: 0,
       previsao_faturamento: 0,
       meta_valor: 0,
       realizado_valor: 0,
@@ -138,6 +141,13 @@ function ComercialDashboard() {
         value: `${formatCurrency(apiKpis.meta_valor ?? 0)} / ${formatCurrency(apiKpis.realizado_valor ?? 0)}`,
         icon: <TrendingUpIcon sx={{ fontSize: 36, color: '#fff' }} />,
         gradient: 'linear-gradient(90deg, #7ed957 0%, #1e466e 100%)',
+      },
+      {
+        label: 'Pedidos Atrasados',
+        subtitle: 'Mês atual',
+        value: `${apiKpis.pedidos_atrasados ?? 0}  (${Number(apiKpis.percentual_atrasados ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`,
+        icon: <WarningAmberIcon sx={{ fontSize: 36, color: '#fff' }} />,
+        gradient: 'linear-gradient(90deg, #b71c1c 0%, #ef5350 100%)',
       },
     ];
   }, [dashboardData.kpis]);
@@ -253,6 +263,9 @@ function ComercialDashboard() {
             >
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, opacity: 0.9, textTransform: 'uppercase', fontSize: 13 }}>{kpi.label}</Typography>
+                {kpi.subtitle && (
+                  <Typography variant="caption" sx={{ opacity: 0.75, fontSize: 11, display: 'block', mb: 0.5 }}>{kpi.subtitle}</Typography>
+                )}
                 <Typography variant="h5" sx={{ fontWeight: 700, whiteSpace: 'pre-line' }}>{kpi.value}</Typography>
               </Box>
               {kpi.icon}
@@ -344,7 +357,7 @@ function ComercialDashboard() {
                 <YAxis tickFormatter={(value) => formatCurrencyCompact(value)} tick={{ fontSize: 11 }} />
                 <RechartsTooltip formatter={(value) => formatCurrency(value)} />
                 <Legend />
-                <Line type="monotone" dataKey="meta" stroke="#22336b" strokeWidth={3} dot={{ r: 4 }} name="Meta" />
+                <Line type="monotone" dataKey="meta" stroke="#22336b" strokeWidth={3} dot={{ r: 4 }} name="Faturamento" />
                 <Line type="monotone" dataKey="realizado" stroke="#43a047" strokeWidth={3} dot={{ r: 4 }} name="Realizado" />
               </LineChart>
             </ResponsiveContainer>
@@ -390,6 +403,10 @@ function ComercialDashboard() {
             <ListItem alignItems="flex-start" sx={{ px: 2 }}>
               <ListItemText primary="Previsão vs Realizado" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
                 secondary="Comparativo entre a meta de faturamento do mês e o valor efetivamente realizado até o momento." />
+            </ListItem>
+            <ListItem alignItems="flex-start" sx={{ px: 2 }}>
+              <ListItemText primary="Pedidos Atrasados" primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                secondary="Pedidos abertos (Em andamento ou Parcialmente atendido) no mês atual cuja data de previsão de faturamento (billingForecastDate) já passou (é anterior à data atual). O percentual é calculado sobre o total de pedidos em aberto no mês." />
             </ListItem>
             <ListItem sx={{ px: 2, pt: 2, pb: 0.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e466e', textTransform: 'uppercase', fontSize: 11 }}>Gráficos</Typography>
