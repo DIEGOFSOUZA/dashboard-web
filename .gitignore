@@ -1,5 +1,7 @@
 node_modules
 build/
+cache/
+cache_dev/
 .env
 .env.*
 *.log
